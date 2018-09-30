@@ -1,0 +1,9 @@
+1. 使用formidable模块处理post请求
+
+2. 模板引擎
+  前端模板:template
+    <% for语句/if语句/while语句 %>
+    <%= 变量名  %>
+  后台模板:ejs , jade(nodejs默认的模板引擎)
+  下载 ejs
+    02_ejs.js
