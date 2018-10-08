@@ -61,6 +61,7 @@ var server = http.createServer(function (req, res) {
         }
         res.end(newPath);
       });
+      
     })
   }else{
     res.end("地址错误");
