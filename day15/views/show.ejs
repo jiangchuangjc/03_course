@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Document</title>
+  <style type="text/css">
+    table.gridtable {
+      font-family: verdana,arial,sans-serif;
+      font-size:24px;
+      color:#333333;
+      border-width: 1px;
+      border-color: #666666;
+      border-collapse: collapse;
+    }
+    table.gridtable th {
+      border-width: 1px;
+      padding: 8px;
+      border-style: solid;
+      border-color: #666666;
+      background-color: #dedede;
+    }
+    table.gridtable td {
+      border-width: 1px;
+      padding: 8px;
+      border-style: solid;
+      border-color: #666666;
+      background-color: #ffffff;
+    }
+    a{
+        color:skyblue;
+        font-size: 24px;
+        margin:15px;
+        text-decoration: none;
+      }
+    </style>
+</head>
+<body>
+  <div>
+    <a href="/regist">学生注册</a>
+    <a href="/login">学生登录</a>
+    <a href="/show">展示学生信息</a>
+    <a href="/del">删除学生信息</a>
+  </div>
+  <h1>学生信息</h1>
+  <!-- 页面从服务器获取数据(一个学生信息的数组),循环遍历数组,以表格的形式显示 -->
+  <table class="gridtable">
+    <tr>
+      <td>姓名</td>
+      <td>密码</td>
+    </tr>
+    <% for(var i=0;i<docs.length;i++){ %>
+      <% if(docs[i].name && docs[i].pwd){ %>
+      <tr>
+        <td><%= docs[i].name %></td>
+        <td><%= docs[i].pwd %></td>
+     </tr>
+    <% } %>
+    <% } %>
+  </table>
+</body>
+</html>

@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Document</title>
+  <style>
+      a{
+        color:skyblue;
+        font-size: 18px;
+        text-decoration: none;
+      }
+      form{
+        margin-left: 15px;
+        margin-top: 10px;
+      }
+   </style>
+</head>
+<body>
+    <form action="/msg" method="POST">
+      <div>用户名:<input type="text" name="username"></div>
+      <div>留&nbsp;&nbsp;&nbsp;言: <textarea name="msg" id="" cols="30" rows="10"></textarea> </div>
+      <div>
+        <input type="submit" value="发言">
+     </div>
+    </form>  
+    <h1>留言信息</h1>
+   <!-- 页面从服务器获取数据(一个学生信息的数组),循环遍历数组,以表格的形式显示 -->
+   <ul>
+     <% for(var i=0;i<docs.length;i++){ %>
+         <li>
+           <%= docs[i].name %>说  <br> <%= docs[i].time %>说  <br>
+           <%= docs[i].msg %>
+        </li>
+        <a href="/update">修改</a>
+        <a href="/delete?time=<%= docs[i].time %>">删除</a>
+     <% } %>
+    </ul> 
+</body>
+</html>
