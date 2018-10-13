@@ -30,10 +30,10 @@
    <ul>
      <% for(var i=0;i<docs.length;i++){ %>
          <li>
-           <%= docs[i].name %>说  <br> <%= docs[i].time %>说  <br>
+           <%= docs[i].name %>说  <br> <%= docs[i].time %> <br>
            <%= docs[i].msg %>
         </li>
-        <a href="/update">修改</a>
+        <a href="/update?time=<%= docs[i].time %>">修改</a>
         <a href="/delete?time=<%= docs[i].time %>">删除</a>
      <% } %>
     </ul> 

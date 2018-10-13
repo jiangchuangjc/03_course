@@ -31,6 +31,7 @@ app.post("/msg",function(req,res){
   db.add("student",json,function(err,result){
     if(err){
       console.log(err);
+      res.send("添加数据出错");
     }else{
       res.redirect("/");
     }
@@ -38,14 +39,39 @@ app.post("/msg",function(req,res){
 })
 // 
 app.get("/update",function(req,res){
-  // console.log(req.params);
-  // res.render("update"); 
-  db.find("student",function(err,docs){
+  var time = req.query.time;
+  res.render("update",{time:time});
+})
+
+app.post("/update",function(req,res){
+  var time = req.body.time;
+  var msg = req.body.msg;
+  var filter = {time:time};
+  var data = {msg:msg};
+  db.modify("student",filter,data,function(err,result){
     if(err){
       console.log(err);
+      res.send("更新失败");
     }else{
-      res.render("update",{docs:docs});
-      console.log(docs);
+      res.redirect("/");
+    }
+  })
+})
+
+app.get("/delete",function(req,res){
+  var time = req.query.time;
+  res.render("delete",{time:time});
+})
+
+app.post("/delete",function(req,res){
+  var time = req.body.time;
+  var filter = {time:time};
+  db.del("student",filter,function(err,result){
+    if(err){
+      console.log(err);
+      res.send("删除失败");
+    }else{
+      res.redirect("/");
     }
   })
 })

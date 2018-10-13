@@ -76,8 +76,6 @@ app.post("/login",function(req,res){
 })
 
 app.get("/msg",function(req,res){
-  // res.render("message");
-  // res.send("1111111")
   var url = "mongodb://localhost:27017"; //数据库地址
   mongoClient.connect(url,{useNewUrlParser: true},function(err,client){
     if(err){
@@ -116,7 +114,7 @@ app.post("/msg",function(req,res){
           res.send("留言失败,请重试");
         }else{
           console.log(result);
-          res.send("留言成功");
+          res.redirect("/msg");
         }
         client.close();
       })

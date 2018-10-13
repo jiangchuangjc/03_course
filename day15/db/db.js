@@ -30,7 +30,7 @@ exports.findAll = function(collection,callback){
      if(err){
        console.log(err);
        //连接失败,将错误信息抛出给调用者
-       throw new Error("连接数据库失败");
+       callback("连接数据库失败",null);
      }else{
        //连接成功,开始获取数据库,获取集合,查询数据
        var coll = client.db(dbName).collection(collection);
@@ -52,7 +52,7 @@ exports.add = function(collection,data,callback){
   GetConn(function(err,client){
     if(err){
       console.log(err);
-      throw new Error("连接数据库失败");
+      callback("连接数据库失败",null);
     }else{
       var coll = client.db(dbName).collection(collection);
       //插入数据
@@ -75,7 +75,7 @@ exports.modify = function(collection,filter,data,callback){
    GetConn(function(err,client){
      if(err){
        console.log(err);
-       throw new Error("连接数据库失败");
+       callback("连接数据库失败",null);
      }else{
        var coll = client.db(dbName).collection(collection);
        //修改数据
@@ -97,7 +97,7 @@ exports.del = function(collection,filter,callback){
   GetConn(function(err,client){
     if(err){
       console.log(err);
-      throw new Error("连接数据库失败");
+      callback("连接数据库失败",null);
     }else{
       var coll = client.db(dbName).collection(collection);
       //删除符合条件的数据
@@ -165,7 +165,7 @@ exports.find = function(collection,filter,option,callback){
    GetConn(function(err,client){
      if(err){
        console.log(err);
-       throw new Error("数据库连接失败");
+       callback("连接数据库失败",null);
      }else{
        //查询
        var coll = client.db(dbName).collection(collection);

@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Document</title>
+  <style>
+      a{
+        color:skyblue;
+        font-size: 18px;
+        text-decoration: none;
+      }
+      form{
+        margin-left: 15px;
+        margin-top: 10px;
+      }
+   </style>
+</head>
+<body>
+      <form  action="/update" method="POST">
+      <div>时间:<input type="text" name="time" value="<%= time %>" readonly></div>
+      <div>留&nbsp;&nbsp;&nbsp;言: <textarea name="msg"  cols="30" rows="10"></textarea> </div>
+      <div>
+        <input type="submit" value="修改">
+     </div>
+    </form> 
+</body>
+</html>
