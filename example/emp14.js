@@ -1,0 +1,1 @@
+new Array(10000).fill('').map((_, index) => index + 1).filter(item => /0/.test(item)).reduce((count, item) => { return count + (String(item).match(/0/g) || []).length}, 0)

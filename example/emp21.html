@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <script type="text/javascript">
+    (function () {
+      var global = this;
+      var _break = new Error('internal break signal');
+
+      function register(obj, type, name, value) {
+        if (type == "public") obj.prototype[name] = value;
+        else if (type == "static") obj[name] = value;
+        else if (type == "constructor" && obj.constructor_) obj.constructor_(value);
+      }
+
+      function cp(target, source, deep) {
+        if (deep) {
+          for (var key in source) {
+            if (source[key] && typeof source[key] == 'object') {
+              target[key] = cp({}, source[key]);
+            } else target[key] = source[key];
+          }
+        } else {
+          for (var key in source) {
+            target[key] = source[key];
+          }
+        }
+        return target;
+      }
+
+      function createClass(constructor, parentClass) {
+        var F, re;
+        re = function () {
+          if (constructor) return constructor.apply(this, arguments);
+        };
+        re.constructor_ = function (v) {
+          if (arguments.length == 1) constructor = v;
+          return constructor;
+        };
+        re.inherit = function (v) {
+          parentClass = v;
+          F = new Function();
+          F.prototype = parentClass.prototype;
+          re.prototype = new F();
+          re.prototype.constructor = re;
+          re.prototype.Class = re;
+          re.prototype.parentClass = parentClass;
+        };
+        if (parentClass) re.inherit(parentClass);
+        else re.prototype.Class = re;
+        re.prototype.su = function (args) {
+          if (this.parentClass && this.parentClass.constructor_ && this.parentClass.constructor_()) {
+            var c = this.parentClass.constructor_();
+            this.Class = this.parentClass;
+            this.parentClass = this.parentClass.prototype.parentClass;
+            var re = c.apply(this, args || []);
+            delete this.Class;
+            delete this.parentClass;
+            return re;
+          }
+        };
+        re.prototype.callSuper = function (methodName, args) {
+          if (this.parentClass && this.parentClass.prototype[methodName]) {
+            var c = this.parentClass.prototype[methodName];
+            this.Class = this.parentClass;
+            this.parentClass = this.parentClass.prototype.parentClass;
+            var re = c.apply(this, args || []);
+            delete this.Class;
+            delete this.parentClass;
+            return re;
+          }
+        };
+        return re;
+      };
+
+      function namespace(ns, fn) {
+        var scope = $(ns);
+        if (typeof fn == "function") fn.apply(scope);
+        return scope;
+
+        function $(ns) {
+          var scope = global,
+            obj;
+          if (typeof ns == "function") return ns;
+          if (ns && ns.split) ns = ns.split(".");
+          else ns = [];
+          for (var i = 0; i < ns.length; i++)
+            if (ns[i]) {
+              if (!scope[ns[i]]) {
+                register(scope, "static", ns[i], createClass());
+                scope[ns[i]].displayName = ns[i];
+                scope[ns[i]].displayPath = ns.slice(0, i + 1).join(".");
+              }
+              scope = scope[ns[i]];
+            } return scope;
+        }
+      }
+      namespace("hjf.lib.uid", function () {
+        var thisClass = this;
+        register(this, "constructor", "uid", uid);
+        var index = 0;
+
+        function uid(complex, prefix) {
+          if (complex) return (prefix || 'u') + (new Date()).getTime().toString(36) + "_" + (Math.random() *
+            0xfffffff | 0).toString(36);
+          else return (prefix || 'u') + (++index).toString(36);
+        }
+      });
+      namespace("hjf.util.ArrayList", function () {
+        var thisClass = this;
+        register(this, "constructor", "init", init);
+        register(this, "public", "reset", reset);
+        register(this, "public", "load", load);
+        register(this, "public", "push", push);
+        register(this, "public", "pop", pop);
+        register(this, "public", "insert", insert);
+        register(this, "public", "insertBefore", insertBefore);
+        register(this, "public", "remove", remove);
+        register(this, "public", "removeItem", removeItem);
+        register(this, "public", "item", item);
+        register(this, "public", "indexOf", indexOf);
+        register(this, "public", "contains", contains);
+        register(this, "public", "length", length);
+        register(this, "public", "moveFirst", moveFirst);
+        register(this, "public", "moveLast", moveLast);
+        register(this, "public", "eof", eof);
+        register(this, "public", "first", first);
+        register(this, "public", "next", next);
+        register(this, "public", "prev", prev);
+        register(this, "public", "last", last);
+        register(this, "public", "isEmpty", isEmpty);
+        register(this, "public", "each", each);
+        register(this, "public", "invoke", invoke);
+        register(this, "public", "toString", toString);
+        register(this, "public", "toArray", toArray);
+
+        function init(v) {
+          this.reset();
+          if (arguments.length > 0) this.load(v);
+          return this;
+        }
+
+        function reset() {
+          this.data = [];
+          this.moveFirst();
+          return this;
+        }
+
+        function load(v) {
+          this.data = this.data.concat(v);
+          return this;
+        }
+
+        function push(v) {
+          this.data.push(v);
+          return this;
+        }
+
+        function pop() {
+          return this.data.pop();
+        }
+
+        function insert(v, index) {
+          this.data.splice(index, 0, v);
+          return this;
+        }
+
+        function insertBefore(v, refer) {
+          var index = this.indexOf(refer);
+          if (index == -1) this.data.push(v);
+          else this.data.splice(index, 0, v);
+          return this;
+        }
+
+        function remove(index, count) {
+          if (arguments.length == 1) this.data.splice(index, 1);
+          else this.data.splice(index, count);
+          return this;
+        }
+
+        function removeItem(v) {
+          var index = this.indexOf(v);
+          if (index != -1) this.data.splice(index, 1);
+          return this;
+        }
+
+        function item(index) {
+          return this.data[index];
+        }
+
+        function indexOf(v) {
+          for (var i = 0; i < this.data.length; i++)
+            if (this.data[i] === v) return i;
+          return -1;
+        }
+
+        function contains(v) {
+          return this.indexOf(v) != -1;
+        }
+
+        function length() {
+          return this.data.length;
+        }
+
+        function moveFirst() {
+          this.p = 0;
+          return this;
+        }
+
+        function moveLast() {
+          this.p = this.data.length - 1;
+          return this;
+        }
+
+        function eof() {
+          return this.p >= this.data.length;
+        }
+
+        function first() {
+          return this.data[0];
+        }
+
+        function next() {
+          return this.data[this.p++];
+        }
+
+        function prev() {
+          return this.data[this.p--];
+        }
+
+        function last() {
+          return this.data[this.data.length - 1];
+        }
+
+        function isEmpty() {
+          return this.data.length == 0;
+        }
+
+        function each(fn) {
+          for (var i = 0; i < this.data.length; i++) fn(this.data[i], i);
+          return this;
+        }
+
+        function invoke(name, args, scope) {
+          for (var i = 0; i < this.data.length; i++)
+            if (typeof this.data[i][name] == 'function') this.data[i][name].apply(scope || this.data[i], args ||
+              []);
+          return this;
+        }
+
+        function toString(joiner) {
+          return this.data.join(joiner);
+        }
+
+        function toArray() {
+          return this.data.slice();
+        }
+      });
+      namespace("hjf.util.HashArrayList", function () {
+        var thisClass = this;
+        this.inherit && this.inherit(hjf.util.ArrayList);
+        register(this, "constructor", "init", init);
+        register(this, "public", "reset", reset);
+        register(this, "public", "load", load);
+        register(this, "public", "push", push);
+        register(this, "public", "pop", pop);
+        register(this, "public", "insert", insert);
+        register(this, "public", "insertBefore", insertBefore);
+        register(this, "public", "remove", remove);
+        register(this, "public", "removeItem", removeItem);
+        register(this, "public", "indexOf", indexOf);
+        register(this, "public", "contains", contains);
+        var prefix = '#';
+
+        function init(v) {
+          this.reset();
+          if (arguments.length > 0) this.load(v);
+        }
+
+        function reset() {
+          this.data = [];
+          this.hash = {};
+          this.moveFirst();
+          return this;
+        }
+
+        function load(v) {
+          if (v && v.length)
+            for (var i = 0; i < v.length; i++) this.push(v[i]);
+          else this.push(v);
+          return this;
+        }
+
+        function push(v) {
+          if (this.contains(v)) return;
+          this.hash[prefix + v] = this.data.length;
+          this.data.push(v);
+          return this;
+        }
+
+        function pop() {
+          delete this.hash[prefix + v];
+          return this.data.pop();
+        }
+
+        function insert(v, index) {
+          if (this.contains(v)) return;
+          else if (isNaN(index) || index < 0 || index >= this.data.length) return this.push(v);
+          this.data.splice(index, 0, v);
+          for (var i = index; i < this.data.length; i++) this.hash[prefix + this.data[i]] = i;
+          return this;
+        }
+
+        function insertBefore(v, refer) {
+          this.insert(v, this.indexOf(refer));
+          return this;
+        }
+
+        function remove(index, count) {
+          if (isNaN(index) || index < 0 || index >= this.data.length) return;
+          if (arguments.length == 1) count = 1;
+          for (var i = index; i < index + count && i < this.data.length; i++) delete this.hash[prefix + this.data[
+            i]];
+          this.data.splice(index, count);
+          for (var i = index; i < this.data.length; i++) this.hash[prefix + this.data[i]] = i;
+          return this;
+        }
+
+        function removeItem(v) {
+          var index = this.indexOf(v);
+          if (index != -1) this.remove(index, 1);
+          return this;
+        }
+
+        function indexOf(v) {
+          if (this.contains(v)) return this.hash[prefix + v];
+          return -1;
+        }
+
+        function contains(v) {
+          return typeof this.hash[prefix + v] != 'undefined';
+        }
+      });
+      namespace("hjf.util.TreeNode", function () {
+        var thisClass = this;
+        if (typeof uid == "undefined") var uid = namespace("hjf.lib.uid");
+        if (typeof HashArrayList == "undefined") var HashArrayList = namespace("hjf.util.HashArrayList");
+        register(this, "constructor", "init", init);
+        register(this, "public", "get", get);
+        register(this, "public", "detach", detach);
+        register(this, "public", "appendChild", appendChild);
+        register(this, "public", "insertBefore", insertBefore);
+        register(this, "public", "removeChild", removeChild);
+        register(this, "public", "previousSibling", previousSibling);
+        register(this, "public", "nextSibling", nextSibling);
+        register(this, "public", "hasChild", hasChild);
+        register(this, "public", "toString", toString);
+
+        function init(v) {
+          this.id = uid(true);
+          this.childNodes = new HashArrayList();
+        }
+
+        function get() {
+          var obj = this;
+          for (var i = 0; i < arguments.length; i++) obj = obj.childNodes.item(arguments[i]);
+          return obj;
+        }
+
+        function detach() {
+          if (this.parentNode) this.parentNode.removeChild(this);
+          return this;
+        }
+
+        function appendChild(nd) {
+          nd.detach();
+          nd.parentNode = this;
+          this.childNodes.push(nd);
+          return this;
+        }
+
+        function insertBefore(nd, refer) {
+          nd.detach();
+          nd.parentNode = this;
+          this.childNodes.insertBefore(nd, refer);
+          return this;
+        }
+
+        function removeChild(nd) {
+          if (nd.parentNode !== this) return;
+          nd.parentNode = null;
+          this.childNodes.removeItem(nd);
+          return this;
+        }
+
+        function previousSibling() {
+          if (!this.parentNode) return;
+          return this.parentNode.childNodes.item(this.parentNode.childNodes.indexOf(this) - 1);
+        }
+
+        function nextSibling() {
+          if (!this.parentNode) return;
+          return this.parentNode.childNodes.item(this.parentNode.childNodes.indexOf(this) + 1);
+        }
+
+        function hasChild() {
+          return !this.childNodes.isEmpty();
+        }
+
+        function toString() {
+          return this.id;
+        }
+      });
+      namespace("hjf.canvas.Canvas", function () {
+        var thisClass = this;
+        this.inherit && this.inherit(hjf.util.TreeNode);
+        register(this, "constructor", "init", init);
+        register(this, "public", "appendTo", appendTo);
+        register(this, "public", "setSize", setSize);
+        register(this, "public", "paint", paint);
+        var ctxSettings = this.prototype["ctxSettings"] = {};
+
+        function init(v) {
+          this.su();
+          this.canvas = document.createElement('canvas');
+          this.ctx = this.canvas.getContext("2d");
+        }
+
+        function appendTo(v) {
+          v.appendChild(this.canvas);
+        }
+
+        function setSize(w, h) {
+          this.canvas.width = w;
+          this.canvas.height = h;
+        }
+
+        function paint() {
+          cp(this.ctx, this.ctxSettings);
+          this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+          this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+          this.childNodes.invoke('paint', [this.ctx]);
+        }
+      });
+      namespace("hjf.canvas.AnimateCanvas", function () {
+        var thisClass = this;
+        this.inherit && this.inherit(hjf.canvas.Canvas);
+        register(this, "constructor", "init", init);
+        register(this, "public", "active", active);
+        register(this, "public", "refresh", refresh);
+        register(this, "public", "play", play);
+        register(this, "public", "pause", pause);
+        var frameRate = this.prototype["frameRate"] = 20;
+        var activeRate = this.prototype["activeRate"] = 50;
+
+        function init(v) {
+          this.su();
+          this.counter = 0;
+        }
+
+        function active() {
+          var that = this;
+          var startTime = (new Date()).getTime();
+          clearTimeout(this.timerActive);
+          this.counter++;
+          this.childNodes.invoke('active', [this.counter]);
+          this.timerActive = setTimeout(function () {
+            that.active();
+          }, 1000 / this.activeRate - ((new Date()).getTime() - startTime));
+        }
+
+        function refresh() {
+          var that = this;
+          var startTime = (new Date()).getTime();
+          clearTimeout(this.timerRefresh);
+          this.paint();
+          this.timerRefresh = setTimeout(function () {
+            that.refresh();
+          }, 1000 / this.frameRate - ((new Date()).getTime() - startTime));
+        }
+
+        function play() {
+          this.active();
+          this.refresh();
+        }
+
+        function pause() {
+          clearTimeout(this.timerActive);
+          clearTimeout(this.timerRefresh);
+        }
+      });
+      namespace("hjf.lib.matrixMultiply", function () {
+        var thisClass = this;
+        register(this, "constructor", "matrixMultiply", matrixMultiply);
+
+        function matrixMultiply(a, b) {
+          return [
+            [a[0][0] * b[0][0] + a[0][1] * b[1][0] + a[0][2] * b[2][0], a[0][0] * b[0][1] + a[0][1] * b[1][1] +
+              a[0][2] * b[2][1], a[0][0] * b[0][2] + a[0][1] * b[1][2] + a[0][2] * b[2][2]
+            ],
+            [a[1][0] * b[0][0] + a[1][1] * b[1][0] + a[1][2] * b[2][0], a[1][0] * b[0][1] + a[1][1] * b[1][1] +
+              a[1][2] * b[2][1], a[1][0] * b[1][2] + a[1][1] * b[1][2] + a[1][2] * b[2][2]
+            ],
+            [a[2][0] * b[0][0] + a[2][1] * b[1][0] + a[2][2] * b[2][0], a[2][0] * b[0][1] + a[2][1] * b[1][1] +
+              a[2][2] * b[2][1], a[2][0] * b[2][2] + a[2][1] * b[1][2] + a[2][2] * b[2][2]
+            ]
+          ];
+        };
+      });
+      namespace("hjf.canvas.Node", function () {
+        var thisClass = this;
+        this.inherit && this.inherit(hjf.util.TreeNode);
+        if (typeof matrixMultiply == "undefined") var matrixMultiply = namespace("hjf.lib.matrixMultiply");
+        register(this, "constructor", "init", init);
+        register(this, "public", "moveTo", moveTo);
+        register(this, "public", "moveBy", moveBy);
+        register(this, "public", "scaleTo", scaleTo);
+        register(this, "public", "scaleBy", scaleBy);
+        register(this, "public", "rotateTo", rotateTo);
+        register(this, "public", "rotateBy", rotateBy);
+        register(this, "public", "paint", paint);
+        register(this, "public", "draw", draw);
+        register(this, "public", "checkPoint", checkPoint);
+        register(this, "public", "isPointInPath", isPointInPath);
+        register(this, "static", "create", create);
+        var display = this.prototype["display"] = true;
+        var ctxSettings = this.prototype["ctxSettings"] = {};
+
+        function init() {
+          this.su();
+          this._angle = 0;
+          this.matrix = [
+            [1, 0, 0],
+            [0, 1, 0],
+            [0, 0, 1]
+          ];
+        }
+
+        function moveTo(x, y) {
+          this.matrix[0][2] = x;
+          this.matrix[1][2] = y;
+        }
+
+        function moveBy(dx, dy) {
+          this.matrix[0][2] += dx;
+          this.matrix[1][2] += dy;
+        }
+
+        function scaleTo(x, y) {
+          this.matrix[0][0] = x;
+          this.matrix[1][1] = y;
+        }
+
+        function scaleBy(dx, dy) {
+          this.matrix[0][0] *= dx;
+          this.matrix[1][1] *= dy;
+        }
+
+        function rotateTo(a) {
+          a -= this._angle;
+          this._angle += a;
+          this.matrix = matrixMultiply(this.matrix, [
+            [Math.cos(a), -Math.sin(a), 0],
+            [Math.sin(a), Math.cos(a), 0],
+            [0, 0, 1]
+          ]);
+        }
+
+        function rotateBy(a) {
+          this._angle += a;
+          this.matrix = matrixMultiply(this.matrix, [
+            [Math.cos(a), -Math.sin(a), 0],
+            [Math.sin(a), Math.cos(a), 0],
+            [0, 0, 1]
+          ]);
+        }
+
+        function paint(ctx) {
+          if (!this.display) return;
+          ctx.save();
+          ctx.transform(this.matrix[0][0], this.matrix[1][0], this.matrix[0][1], this.matrix[1][1], this.matrix[0]
+            [2], this.matrix[1][2]);
+          cp(ctx, this.ctxSettings);
+          this.draw(ctx);
+          this.childNodes.invoke('paint', [ctx]);
+          ctx.restore();
+        }
+
+        function draw(ctx) {}
+
+        function checkPoint(ctx, x, y, hit) {
+          if (!this.display) return;
+          ctx.save();
+          ctx.transform(this.matrix[0][0], this.matrix[1][0], this.matrix[0][1], this.matrix[1][1], this.matrix[0]
+            [2], this.matrix[1][2]);
+          cp(ctx, this.ctxSettings);
+          this.childNodes.invoke('checkPoint', [ctx, x, y, hit]);
+          if (this.isPointInPath(ctx, x, y)) hit(this);
+          ctx.restore();
+        }
+
+        function isPointInPath(ctx, x, y) {}
+
+        function create(draw, ctxSettings, settings) {
+          var re = new thisClass();
+          re.draw = draw;
+          re.ctxSettings = ctxSettings;
+          cp(re, settings);
+          return re;
+        }
+      });
+      namespace("hjf.canvas.Star", function () {
+        var thisClass = this;
+        this.inherit && this.inherit(hjf.canvas.Node);
+        register(this, "constructor", "init", init);
+        register(this, "public", "draw", draw);
+        register(this, "public", "active", active);
+        register(this, "public", "setup", setup);
+        register(this, "public", "isPointInPath", isPointInPath);
+        var rotateSpeed = this.prototype["rotateSpeed"] = 0;
+
+        function init(count, r, inner) {
+          this.su();
+          this.setup(count || 4, r || 50, inner || 0.4);
+        }
+
+        function draw(ctx) {
+          if (!this.gradient) {
+            this.gradient = ctx.createRadialGradient(0, 0, 1, 0, 0, this.r);
+            this.gradient.addColorStop(0, 'rgba(255,255,255,1)');
+            this.gradient.addColorStop(0.3, 'rgba(255,255,255,0.3)');
+            this.gradient.addColorStop(1, 'rgba(255,255,255,0)');
+          }
+          ctx.fillStyle = this.gradient;
+          ctx.beginPath();
+          ctx.moveTo(this.pts[0], this.pts[1]);
+          for (var i = 2; i < this.pts.length; i += 2) ctx.lineTo(this.pts[i], this.pts[i + 1]);
+          ctx.closePath();
+          ctx.fill();
+        }
+
+        function active() {
+          this.rotateBy(this.rotateSpeed);
+        }
+
+        function setup(count, r, inner) {
+          var len = count * 2;
+          this.pts = new Array(len * 2);
+          this.r = r;
+          for (var i = 0; i < len; i++) {
+            this.pts[i * 2] = Math.cos(Math.PI * 2 * i / len) * r * (i % 2 == 1 ? 1 : inner);
+            this.pts[i * 2 + 1] = Math.sin(Math.PI * 2 * i / len) * r * (i % 2 == 1 ? 1 : inner);
+          }
+          this.gradient = null;
+        }
+
+        function isPointInPath(ctx, x, y) {}
+      });
+      namespace("hjf.canvas.S1", function () {
+        var thisClass = this;
+        this.inherit && this.inherit(hjf.canvas.Node);
+        if (typeof Star == "undefined") var Star = namespace("hjf.canvas.Star");
+        register(this, "constructor", "init", init);
+        register(this, "public", "draw", draw);
+        register(this, "public", "setup", setup);
+        var ctxSettings = this.prototype["ctxSettings"] = {
+          strokeStyle: 'rgba(0, 255, 0, 1)'
+        };
+        var len = 3;
+
+        function init(a, r, tmax) {
+          this.su();
+          this.setup(a || 0, r || 150, tmax || 3000);
+          this.star = new Star(4, 14);
+          this.appendChild(this.star);
+        }
+
+        function draw(ctx) {
+          var t = (new Date()).getTime();
+          var dt = t - this.t0;
+          var pts = [];
+          if (dt < this.tmax) {
+            for (var i = 0; i < len + 1 && i / len < dt / this.tmax; i++) {
+              pts[i * 2] = Math.cos(Math.PI * 2 * i / len + this.a) * this.r;
+              pts[i * 2 + 1] = Math.sin(Math.PI * 2 * i / len + this.a) * this.r;
+            }
+            var tx = Math.cos(Math.PI * 2 * i / len + this.a) * this.r;
+            var ty = Math.sin(Math.PI * 2 * i / len + this.a) * this.r;
+            var k = (dt / this.tmax - (i - 1) / len) * len;
+            pts[i * 2] = pts[i * 2 - 2] + (tx - pts[i * 2 - 2]) * k;
+            pts[i * 2 + 1] = pts[i * 2 - 1] + (ty - pts[i * 2 - 1]) * k;
+          } else {
+            for (var i = 0; i < len + 1; i++) {
+              pts[i * 2] = Math.cos(Math.PI * 2 * i / len + this.a) * this.r;
+              pts[i * 2 + 1] = Math.sin(Math.PI * 2 * i / len + this.a) * this.r;
+            }
+          }
+          this.rotateBy(0.04);
+          ctx.beginPath();
+          ctx.moveTo(pts[0], pts[1]);
+          for (var i = 2; i < pts.length; i += 2) ctx.lineTo(pts[i], pts[i + 1]);
+          ctx.stroke();
+          this.star.moveTo(pts[i - 2], pts[i - 1]);
+          this.star.rotateBy(0.2);
+        }
+
+        function setup(a, r, tmax) {
+          this.a = a;
+          this.r = r;
+          this.tmax = tmax;
+          this.pts = [];
+          this.t0 = (new Date()).getTime();
+        }
+      });
+      namespace("hjf.canvas.S2", function () {
+        var thisClass = this;
+        this.inherit && this.inherit(hjf.canvas.Node);
+        if (typeof Star == "undefined") var Star = namespace("hjf.canvas.Star");
+        register(this, "constructor", "init", init);
+        register(this, "public", "draw", draw);
+        register(this, "public", "setup", setup);
+        var ctxSettings = this.prototype["ctxSettings"] = {
+          strokeStyle: 'rgba(0, 255, 0, 1)'
+        };
+        var len = 3;
+
+        function init(a, r, tmax) {
+          this.su();
+          this.setup(a || 0, r || 150, tmax || 3000);
+          this.star = new Star(4, 14);
+          this.appendChild(this.star);
+        }
+
+        function draw(ctx) {
+          var t = (new Date()).getTime();
+          var dt = t - this.t0;
+          var da;
+          if (dt < this.tmax) {
+            da = this.a + Math.PI * 2 * dt / this.tmax;
+          } else {
+            da = this.a + Math.PI * 2;
+          }
+          this.rotateBy(0.04);
+          ctx.beginPath();
+          ctx.arc(0, 0, this.r, this.a, da);
+          ctx.stroke();
+          this.star.moveTo(Math.cos(da) * this.r, Math.sin(da) * this.r);
+          this.star.rotateBy(0.2);
+        }
+
+        function setup(a, r, tmax) {
+          this.a = a;
+          this.r = r;
+          this.tmax = tmax;
+          this.t0 = (new Date()).getTime();
+        }
+      });
+      namespace("hjf.canvas.S0", function () {
+        var thisClass = this;
+        this.inherit && this.inherit(hjf.canvas.Node);
+        if (typeof S1 == "undefined") var S1 = namespace("hjf.canvas.S1");
+        if (typeof S2 == "undefined") var S2 = namespace("hjf.canvas.S2");
+        register(this, "constructor", "init", init);
+        register(this, "public", "draw", draw);
+        var ctxSettings = this.prototype["ctxSettings"] = {
+          strokeStyle: 'rgba(0, 255, 0, 1)'
+        };
+        var len = 3;
+
+        function init() {
+          this.su();
+          this.t0 = (new Date()).getTime();
+          this.appendChild(new S1());
+          this.appendChild(new S1(Math.PI / 3));
+          this.appendChild(new S2());
+        }
+
+        function draw(ctx) {
+          ctx.fillStyle = 'rgba(0, 255, 0, 1)';
+          var s = ((new Date()).getTime() - this.t0) / 30;
+          if (s > 100) {
+            s = 100;
+            ctx.translate((Math.random() - 0.5) * 4, (Math.random() - 0.5) * 4);
+          }
+          s = s.toFixed(2) + '%';
+          ctx.fillText(s, -ctx.measureText(s).width / 2, 0);
+        }
+      });
+      var thisClass = this;
+      if (typeof AnimateCanvas == "undefined") var AnimateCanvas = namespace("hjf.canvas.AnimateCanvas");
+      if (typeof Node == "undefined") var Node = namespace("hjf.canvas.Node");
+      if (typeof Star == "undefined") var Star = namespace("hjf.canvas.Star");
+      if (typeof S0 == "undefined") var S0 = namespace("hjf.canvas.S0");
+      window.onload = function () {
+        var c = new hjf.canvas.AnimateCanvas();
+        c.setSize(900, 500);
+        c.ctxSettings = {
+          fillStyle: 'rgba(0, 0, 0, 1)'
+        };
+        c.appendTo(document.body);
+        var s0 = new S0();
+        s0.moveTo(450, 250);
+        c.appendChild(s0);
+        c.play();
+      };
+    })();
+  </script>
+</head>
+
+<body></body>
+
+</html>
